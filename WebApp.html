@@ -1,0 +1,1635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>AIMM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+<style>
+:root{
+  --bg:#f8f8f8;--bg2:#ffffff;--bg3:#eeeeee;
+  --line:#e2e2e2;--line2:#cccccc;
+  --text:#0d0d0d;--text2:#444444;--text3:#888888;
+  --accent:#1a73e8;--accent-bg:#e8f0fe;
+  --green:#188038;--green-bg:#e6f4ea;
+  --red:#c5221f;--red-bg:#fce8e6;
+  --amber:#b06000;--amber-bg:#fff3e0;
+  --font:'DM Sans',system-ui,sans-serif;
+  --mono:'DM Mono',monospace;
+  --r:10px;
+  --safe-t:max(env(safe-area-inset-top,0px),14px);
+  --safe-b:max(env(safe-area-inset-bottom,0px),20px);
+}
+[data-dark]{
+  --bg:#0e0e0e;--bg2:#181818;--bg3:#222222;
+  --line:#2c2c2c;--line2:#3a3a3a;
+  --text:#f2f2f2;--text2:#aaaaaa;--text3:#555555;
+  --accent:#5ba8ff;--accent-bg:#1a2d45;
+  --green:#34a853;--green-bg:#0d2818;
+  --red:#f28b82;--red-bg:#2a1010;
+  --amber:#ffca28;--amber-bg:#2a1e00;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{
+  width:100%;height:100%;overflow:hidden;
+  background:var(--bg);color:var(--text);
+  font-family:var(--font);font-size:16px;line-height:1.5;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;-webkit-user-select:none;user-select:none;
+  overscroll-behavior:none;
+}
+#dwall{
+  display:none;position:fixed;inset:0;z-index:9999;background:var(--bg);
+  flex-direction:column;align-items:center;justify-content:center;
+  gap:16px;text-align:center;padding:40px;
+}
+#dwall .logo{font-family:var(--mono);font-size:32px;letter-spacing:8px;color:var(--accent);}
+#dwall p{color:var(--text2);line-height:1.7;max-width:280px;font-size:17px;}
+@media(min-width:1024px){#dwall{display:flex}#app{display:none!important}}
+#app{position:fixed;inset:0;background:var(--bg);}
+#header{
+  position:fixed;top:0;left:0;right:0;z-index:300;
+  height:calc(var(--safe-t) + 52px);padding-top:var(--safe-t);
+  display:flex;align-items:center;justify-content:space-between;
+  padding-left:20px;padding-right:14px;
+  background:var(--bg2);border-bottom:1px solid var(--line);
+}
+.h-logo{font-family:var(--mono);font-size:17px;letter-spacing:5px;color:var(--text);font-weight:500;}
+.h-right{display:flex;gap:6px;align-items:center;}
+.h-btn{
+  width:40px;height:40px;border-radius:50%;
+  border:1.5px solid var(--line2);background:transparent;
+  color:var(--text2);font-size:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background 0.15s;font-family:var(--font);
+}
+.h-btn:active{background:var(--bg3);}
+.h-btn.hidden{display:none;}
+.screen{
+  position:fixed;inset:0;padding-top:calc(var(--safe-t) + 52px);
+  padding-bottom:var(--safe-b);display:none;flex-direction:column;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+}
+.screen.on{display:flex;}
+.sp{padding:24px 20px;flex:1;display:flex;flex-direction:column;gap:20px;}
+
+/* SETUP */
+#s-setup{background:var(--bg);}
+.setup-hd{font-size:28px;font-weight:600;color:var(--text);}
+.step-list{display:flex;flex-direction:column;}
+.step-row{display:flex;align-items:flex-start;gap:16px;padding:16px 0;border-bottom:1px solid var(--line);}
+.step-row:last-child{border-bottom:none;}
+.step-ico{
+  width:36px;height:36px;border-radius:50%;flex-shrink:0;
+  border:2px solid var(--line2);background:var(--bg2);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:13px;color:var(--text3);
+  font-weight:500;transition:all 0.2s;margin-top:2px;
+}
+.step-row.active .step-ico{border-color:var(--accent);color:var(--accent);background:var(--accent-bg);}
+.step-row.done .step-ico{border-color:var(--green);color:var(--green);background:var(--green-bg);}
+.step-row.err .step-ico{border-color:var(--red);color:var(--red);background:var(--red-bg);}
+.step-body{flex:1;min-width:0;}
+.step-name{font-size:17px;font-weight:500;color:var(--text2);transition:color 0.2s;}
+.step-row.active .step-name,.step-row.done .step-name{color:var(--text);}
+.step-row.err .step-name{color:var(--red);}
+.step-msg{font-family:var(--mono);font-size:12px;color:var(--text3);line-height:1.5;margin-top:2px;word-break:break-word;}
+.step-row.active .step-msg{color:var(--text2);}
+.step-row.err .step-msg{color:var(--red);}
+.step-bar{margin-top:8px;height:3px;background:var(--line);border-radius:2px;overflow:hidden;display:none;}
+.step-bar-fill{height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width 0.3s linear;}
+.spin{width:16px;height:16px;border-radius:50%;border:2.5px solid var(--accent-bg);border-top-color:var(--accent);animation:spin 0.7s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.prog-track{height:4px;background:var(--line);border-radius:2px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width 0.4s ease;}
+.prog-lbl{font-family:var(--mono);font-size:12px;color:var(--text3);margin-top:8px;}
+.err-box{display:none;background:var(--red-bg);border:1.5px solid var(--red);border-radius:var(--r);padding:14px 16px;}
+.err-box.on{display:block;}
+.err-box-title{font-size:16px;font-weight:600;color:var(--red);margin-bottom:4px;}
+.err-box-msg{font-family:var(--mono);font-size:12px;color:var(--red);line-height:1.5;word-break:break-all;white-space:pre-wrap;max-height:80px;overflow-y:auto;}
+.btn{width:100%;padding:15px 20px;border-radius:var(--r);border:none;font-family:var(--font);font-size:17px;font-weight:500;cursor:pointer;transition:opacity 0.15s,background 0.15s;text-align:center;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:active{opacity:0.85;}
+.btn-primary:disabled{opacity:0.35;cursor:not-allowed;}
+.btn-ghost{background:transparent;color:var(--text2);border:1.5px solid var(--line2);}
+.btn-ghost:active{background:var(--bg3);}
+.g-btn{
+  width:100%;display:flex;align-items:center;justify-content:center;
+  gap:12px;padding:14px 20px;background:#fff;border:1.5px solid #dadce0;
+  border-radius:var(--r);font-family:var(--font);font-size:17px;font-weight:500;color:#3c4043;
+  cursor:pointer;transition:opacity 0.15s;
+}
+.g-btn:active{opacity:0.8;}.g-btn:disabled{opacity:0.4;cursor:not-allowed;}.g-btn svg{flex-shrink:0;}
+
+/* SESSION */
+.card{background:var(--bg2);border:1.5px solid var(--line);border-radius:var(--r);overflow:hidden;}
+.card-label{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--bg3);}
+.card-body{padding:14px 16px;}
+.uuid-val{font-family:var(--mono);font-size:13px;color:var(--accent);letter-spacing:2px;word-break:break-all;line-height:2;}
+.loc-row{display:flex;align-items:center;gap:10px;}
+.loc-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0;}
+.loc-dot.ok{background:var(--green);}.loc-dot.err{background:var(--red);}
+.loc-dot.ld{background:var(--accent);animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.2;}}
+.loc-val{font-family:var(--mono);font-size:13px;color:var(--text2);flex:1;}
+.field-row{display:flex;align-items:center;gap:10px;}
+.field-lbl{font-size:16px;color:var(--text2);flex-shrink:0;}
+.field-in{flex:1;background:var(--bg);border:1.5px solid var(--line2);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:16px;font-weight:500;padding:10px 14px;outline:none;transition:border-color 0.2s;-webkit-user-select:text;user-select:text;-webkit-appearance:none;}
+.field-in:focus{border-color:var(--accent);}
+.field-unit{font-family:var(--mono);font-size:13px;color:var(--text3);flex-shrink:0;}
+.spacer{flex:1;}
+
+/* CAMERA */
+#s-camera{background:#000;padding:0!important;overflow:hidden;flex-direction:column;}
+/* viewport: auto-height = video natural height, zero crop */
+#cam-viewport{
+  position:relative;width:100%;flex:0 0 auto;
+  background:#000;touch-action:none;overflow:hidden;
+}
+/* video: block, full width, height auto = no crop, no stretch, no cover */
+#vid{display:block;width:100%;height:auto;}
+/* canvases sit exactly on top of video, matched by JS */
+#c-mask,#c-pose{
+  position:absolute;top:0;left:0;
+  pointer-events:none;
+}
+#c-mask{z-index:1;}#c-pose{z-index:2;}
+/* pose guide card — bottom-left of viewport */
+#pose-card{
+  position:absolute;bottom:8px;left:8px;z-index:10;
+  width:64px;height:86px;border-radius:8px;
+  background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.15);
+  overflow:hidden;display:flex;align-items:center;justify-content:center;
+  pointer-events:none;
+}
+#pose-card svg{width:52px;height:72px;}
+#c-flash{position:absolute;inset:0;z-index:50;background:#fff;opacity:0;pointer-events:none;transition:opacity 0.05s;}
+#c-flash.on{opacity:0.9;}
+/* controls panel below viewport */
+#cam-panel{flex:1;background:var(--bg);overflow:hidden;display:flex;flex-direction:column;}
+#no-pose-bar{display:none;background:var(--amber-bg);border-bottom:1.5px solid var(--amber);padding:8px 16px;font-family:var(--mono);font-size:12px;color:var(--amber);}
+#no-pose-bar.on{display:block;}
+#cam-topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 6px;border-bottom:1px solid var(--line);background:var(--bg2);}
+.cam-phase{font-family:var(--mono);font-size:12px;letter-spacing:2.5px;color:var(--text3);}
+.cam-topright{display:flex;gap:6px;align-items:center;}
+.cam-btn{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--line2);background:transparent;color:var(--text2);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s;font-family:var(--font);}
+.cam-btn:active{background:var(--bg3);}
+.mode-pill{display:flex;align-items:center;background:var(--bg3);border:1.5px solid var(--line2);border-radius:20px;padding:2px;gap:2px;}
+.mpb{padding:4px 12px;border-radius:16px;border:none;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:0.5px;cursor:pointer;background:transparent;color:var(--text3);transition:all 0.15s;}
+.mpb.on{background:var(--accent);color:#fff;}
+#h-display{display:flex;gap:0;border-bottom:1px solid var(--line);}
+.h-box{flex:1;padding:8px 10px;display:flex;flex-direction:column;gap:2px;border-right:1px solid var(--line);}
+.h-box:last-child{border-right:none;}
+.h-lbl{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;}
+.h-val{font-size:18px;font-weight:600;color:var(--text);font-family:var(--mono);}
+.h-val.dim{color:var(--text3);font-weight:400;}
+#chips-row{display:flex;gap:6px;padding:8px 14px;overflow-x:auto;-webkit-overflow-scrolling:touch;border-bottom:1px solid var(--line);scrollbar-width:none;}
+#chips-row::-webkit-scrollbar{display:none;}
+.chip{display:flex;align-items:center;gap:5px;flex-shrink:0;background:var(--bg3);border:1.5px solid var(--line2);border-radius:20px;padding:5px 10px;}
+.chip-dot{width:6px;height:6px;border-radius:50%;background:var(--text3);}
+.chip-lbl{font-family:var(--mono);font-size:11px;color:var(--text3);font-weight:500;}
+.chip.ok{border-color:var(--green);background:var(--green-bg);}
+.chip.ok .chip-dot{background:var(--green);}.chip.ok .chip-lbl{color:var(--green);}
+.chip.bad{border-color:var(--red);background:var(--red-bg);}
+.chip.bad .chip-dot{background:var(--red);}.chip.bad .chip-lbl{color:var(--red);}
+.chip.warn{border-color:var(--amber);background:var(--amber-bg);}
+.chip.warn .chip-dot{background:var(--amber);}.chip.warn .chip-lbl{color:var(--amber);}
+.chip.dis{opacity:0.3;}
+#guide-txt{padding:8px 16px;font-size:15px;color:var(--text2);border-bottom:1px solid var(--line);min-height:40px;display:flex;align-items:center;}
+#guide-txt.ok{color:var(--green);}#guide-txt.bad{color:var(--red);}#guide-txt.warn{color:var(--amber);}
+#shutter-row{flex:1;display:flex;align-items:center;justify-content:center;padding:8px 0;}
+#shutter{width:68px;height:68px;border-radius:50%;border:3px solid var(--line2);background:var(--bg2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s;position:relative;}
+#shutter::after{content:'';width:52px;height:52px;border-radius:50%;background:var(--bg3);transition:all 0.15s;}
+#shutter:active::after{transform:scale(0.88);}
+#shutter.ok{border-color:var(--green);}#shutter.ok::after{background:var(--green);}
+#shutter.warn{border-color:var(--amber);}#shutter.warn::after{background:var(--amber);}
+#shutter.off{opacity:0.3;cursor:not-allowed;}
+
+/* PREVIEW */
+#preview{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.97);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;}
+#preview.on{display:flex;}
+.prev-lbl{font-family:var(--mono);font-size:12px;letter-spacing:2px;color:rgba(255,255,255,0.4);flex-shrink:0;}
+.prev-img-wrap{
+  position:relative;border-radius:10px;overflow:hidden;
+  width:min(75vw,calc((100vh - 120px) * 0.75));
+  height:min(calc(75vw * 4 / 3),calc(100vh - 120px));
+  background:#000;flex-shrink:0;
+}
+.prev-img-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
+.prev-status{position:absolute;bottom:0;left:0;right:0;padding:8px 12px;font-family:var(--mono);font-size:11px;text-align:center;background:rgba(0,0,0,0.8);display:none;}
+.prev-status.on{display:block;}.prev-status.uploading{color:#fdd663;}.prev-status.err{color:#f28b82;}
+.prev-btns{display:flex;gap:10px;width:min(75vw,calc((100vh - 120px) * 0.75));flex-shrink:0;}
+.prev-btn{flex:1;padding:13px 0;border-radius:var(--r);font-family:var(--font);font-size:17px;font-weight:500;border:1.5px solid rgba(255,255,255,0.15);cursor:pointer;transition:opacity 0.15s;}
+.prev-btn:active{opacity:0.75;}
+.prev-btn.retake{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);}
+.prev-btn.proceed{background:var(--accent);color:#fff;border-color:var(--accent);}
+.prev-btn.proceed:disabled{opacity:0.35;pointer-events:none;}
+
+/* Session expiry banner */
+#reauth-banner{
+  display:none;position:fixed;bottom:0;left:0;right:0;z-index:500;
+  background:var(--amber-bg);border-top:2px solid var(--amber);
+  padding:10px 16px;display:none;align-items:center;justify-content:space-between;gap:12px;
+}
+#reauth-banner.on{display:flex;}
+#reauth-msg{font-size:14px;color:var(--amber);flex:1;}
+#reauth-btn{padding:8px 18px;border-radius:8px;border:1.5px solid var(--amber);background:transparent;color:var(--amber);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;}
+#reauth-btn:active{background:var(--amber-bg);}
+
+/* FORM */
+#s-form{background:var(--bg);}
+.form-card{background:var(--bg2);border:1.5px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:14px;}
+.form-card-hd{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--bg3);}
+.form-field{padding:14px 16px;border-bottom:1px solid var(--line);}
+.form-field:last-child{border-bottom:none;}
+.f-lbl{font-size:14px;color:var(--text2);display:block;margin-bottom:8px;font-weight:500;}
+.f-in{width:100%;background:var(--bg);border:1.5px solid var(--line2);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:16px;padding:10px 14px;outline:none;transition:border-color 0.2s;-webkit-user-select:text;user-select:text;-webkit-appearance:none;}
+.f-in:focus{border-color:var(--accent);}.f-in::placeholder{color:var(--text3);}
+input[type="date"].f-in{color-scheme:light dark;}
+select.f-in{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;}
+.seg{display:flex;gap:8px;}
+.seg-btn{flex:1;padding:10px 0;border-radius:8px;border:1.5px solid var(--line2);background:var(--bg);font-size:16px;font-weight:500;color:var(--text2);cursor:pointer;text-align:center;transition:all 0.15s;}
+.seg-btn.on{background:var(--accent-bg);border-color:var(--accent);color:var(--accent);}
+.seg-btn:active{opacity:0.7;}
+.consent-wrap{background:var(--amber-bg);border:1.5px solid rgba(180,100,0,0.25);border-radius:var(--r);padding:16px;margin-bottom:14px;}
+.consent-row{display:flex;align-items:flex-start;gap:14px;cursor:pointer;}
+.consent-box{width:22px;height:22px;min-width:22px;border-radius:5px;border:2px solid var(--line2);background:var(--bg);margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.consent-box.on{background:var(--accent);border-color:var(--accent);}
+.consent-tick{color:#fff;font-size:13px;font-weight:700;opacity:0;transition:opacity 0.15s;}
+.consent-box.on .consent-tick{opacity:1;}
+.consent-txt{font-size:14px;color:var(--text2);line-height:1.7;-webkit-user-select:text;user-select:text;}
+.form-msg{font-family:var(--mono);font-size:13px;text-align:center;min-height:20px;padding:6px 0;}
+.form-msg.ok{color:var(--green);}.form-msg.err{color:var(--red);}
+</style>
+
+<div id="dwall">
+  <div class="logo">AIMM</div>
+  <p>This app is designed for mobile devices only.</p>
+</div>
+
+<div id="app">
+  <div id="header">
+    <span class="h-logo">AIMM</span>
+    <div class="h-right">
+      <button class="h-btn hidden" id="h-reset">&#8634;</button>
+      <button class="h-btn hidden" id="h-signout">&#9167;</button>
+      <button class="h-btn" id="h-theme">&#9680;</button>
+    </div>
+  </div>
+
+  <!-- SETUP -->
+  <div class="screen on" id="s-setup">
+    <div class="sp">
+      <div class="setup-hd">AIMM</div>
+      <div class="step-list">
+        <div class="step-row" id="st-cam">
+          <div class="step-ico" id="st-cam-ico">1</div>
+          <div class="step-body"><div class="step-name">Camera</div><div class="step-msg" id="st-cam-msg">Waiting&hellip;</div></div>
+        </div>
+        <div class="step-row" id="st-loc">
+          <div class="step-ico" id="st-loc-ico">2</div>
+          <div class="step-body"><div class="step-name">Location</div><div class="step-msg" id="st-loc-msg">Waiting&hellip;</div></div>
+        </div>
+        <div class="step-row" id="st-auth">
+          <div class="step-ico" id="st-auth-ico">3</div>
+          <div class="step-body"><div class="step-name">Sign in</div><div class="step-msg" id="st-auth-msg">Waiting&hellip;</div></div>
+        </div>
+        <div class="step-row" id="st-model">
+          <div class="step-ico" id="st-model-ico">4</div>
+          <div class="step-body">
+            <div class="step-name">Holistic Model</div>
+            <div class="step-msg" id="st-model-msg">Waiting&hellip;</div>
+            <div class="step-bar" id="st-model-bar"><div class="step-bar-fill" id="st-model-fill"></div></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+        <div class="prog-lbl" id="prog-lbl">Starting&hellip;</div>
+      </div>
+      <div class="err-box" id="err-box">
+        <div class="err-box-title" id="err-title">Error</div>
+        <div class="err-box-msg" id="err-msg"></div>
+      </div>
+      <button class="g-btn" id="g-signin" style="display:none" onclick="triggerSignIn()">
+        <svg width="20" height="20" viewBox="0 0 18 18">
+          <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
+          <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+          <path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/>
+          <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z"/>
+        </svg>
+        Sign in with Google
+      </button>
+      <div class="spacer"></div>
+    </div>
+  </div>
+
+  <!-- SESSION -->
+  <div class="screen" id="s-session">
+    <div class="sp">
+      <div class="card">
+        <div class="card-label">Session ID</div>
+        <div class="card-body"><div class="uuid-val" id="sess-uuid">&mdash;</div></div>
+      </div>
+      <div class="card">
+        <div class="card-label">Location</div>
+        <div class="card-body">
+          <div class="loc-row">
+            <div class="loc-dot ld" id="loc-dot"></div>
+            <div class="loc-val" id="loc-val">Acquiring&hellip;</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">Camera Height</div>
+        <div class="card-body">
+          <div class="field-row">
+            <span class="field-lbl">Height from ground</span>
+            <input class="field-in" type="number" id="camh-input" min="10" max="300" placeholder="70">
+            <span class="field-unit">cm</span>
+          </div>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn btn-primary" id="sess-go">Begin Capture &rarr;</button>
+    </div>
+  </div>
+
+  <!-- CAMERA -->
+  <div class="screen" id="s-camera">
+    <div id="cam-viewport">
+      <video id="vid" autoplay playsinline muted></video>
+      <canvas id="c-mask"></canvas>
+      <canvas id="c-pose"></canvas>
+      <div id="pose-card"><svg id="pose-sil" viewBox="0 0 60 80" fill="none" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <div id="c-flash"></div>
+    </div>
+    <div id="cam-panel">
+      <div id="no-pose-bar">POSE DETECTION UNAVAILABLE &mdash; WARN MODE ACTIVE</div>
+      <div id="cam-topbar">
+        <span class="cam-phase" id="cam-phase-lbl">FRONT VIEW</span>
+        <div class="cam-topright">
+          <div class="mode-pill" id="cam-mpill">
+            <button class="mpb on" id="cam-block">BLOCK</button>
+            <button class="mpb" id="cam-warn">WARN</button>
+          </div>
+          <button class="cam-btn" id="cam-reset">&#8634;</button>
+          <button class="cam-btn" id="cam-signout">&#9167;</button>
+          <button class="cam-btn" id="cam-theme">&#9680;</button>
+        </div>
+      </div>
+      <div id="h-display">
+        <div class="h-box">
+          <div class="h-lbl">Height</div>
+          <div class="h-val dim" id="hval-cur">&mdash;</div>
+        </div>
+        <div class="h-box">
+          <div class="h-lbl">&beta;</div>
+          <div class="h-val dim" id="hval-beta">&mdash;</div>
+        </div>
+        <div class="h-box">
+          <div class="h-lbl">&gamma;</div>
+          <div class="h-val dim" id="hval-gamma">&mdash;</div>
+        </div>
+      </div>
+      <div id="chips-row">
+        <div class="chip" id="ch-light"><div class="chip-dot"></div><span class="chip-lbl">LIGHT</span></div>
+        <div class="chip" id="ch-steady"><div class="chip-dot"></div><span class="chip-lbl">STEADY</span></div>
+        <div class="chip" id="ch-level"><div class="chip-dot"></div><span class="chip-lbl">LEVEL</span></div>
+        <div class="chip" id="ch-body"><div class="chip-dot"></div><span class="chip-lbl">BODY</span></div>
+        <div class="chip" id="ch-dist"><div class="chip-dot"></div><span class="chip-lbl">DIST</span></div>
+        <div class="chip" id="ch-pose"><div class="chip-dot"></div><span class="chip-lbl">POSE</span></div>
+      </div>
+      <div id="guide-txt">Initialising&hellip;</div>
+      <div id="shutter-row"><button id="shutter" class="off"></button></div>
+    </div>
+  </div>
+
+  <!-- FORM -->
+  <div class="screen" id="s-form">
+    <div class="sp">
+      <div class="form-card">
+        <div class="form-card-hd">Biometric</div>
+        <div class="form-field"><label class="f-lbl" for="f-dob">Date of Birth</label><input class="f-in" type="date" id="f-dob"></div>
+        <div class="form-field">
+          <label class="f-lbl">Gender</label>
+          <div class="seg"><button class="seg-btn" id="g-male" data-v="Male">Male</button><button class="seg-btn" id="g-female" data-v="Female">Female</button></div>
+        </div>
+        <div class="form-field"><label class="f-lbl" for="f-weight">Weight (g)</label><input class="f-in" type="number" id="f-weight" placeholder="e.g. 65000" min="0"></div>
+        <div class="form-field"><label class="f-lbl" for="f-height">Height (cm) &mdash; Self-reported</label><input class="f-in" type="number" id="f-height" placeholder="e.g. 165" min="0"></div>
+        <div class="form-field"><label class="f-lbl" for="f-muac">MUAC (mm)</label><input class="f-in" type="number" id="f-muac" placeholder="e.g. 240" min="0"></div>
+      </div>
+      <div class="form-card">
+        <div class="form-card-hd">Measurements</div>
+        <div class="form-field"><label class="f-lbl">Front Height Est. (cm)</label><input class="f-in" type="number" id="f-h-front" placeholder="&mdash;" readonly></div>
+        <div class="form-field"><label class="f-lbl">Side Height Est. (cm)</label><input class="f-in" type="number" id="f-h-side" placeholder="&mdash;" readonly></div>
+      </div>
+      <div class="form-card">
+        <div class="form-card-hd">Household</div>
+        <div class="form-field">
+          <label class="f-lbl">Female Literacy</label>
+          <div class="seg"><button class="seg-btn" id="lit-yes" data-v="yes">Yes</button><button class="seg-btn" id="lit-no" data-v="no">No</button></div>
+        </div>
+        <div class="form-field">
+          <label class="f-lbl" for="f-caste">Social Group</label>
+          <select class="f-in" id="f-caste">
+            <option value="">&mdash; Select &mdash;</option>
+            <option>Scheduled Caste</option><option>Scheduled Tribe</option>
+            <option>Other Backward Class</option><option>General</option>
+            <option>Prefer not to answer</option>
+          </select>
+        </div>
+      </div>
+      <div class="consent-wrap">
+        <div class="consent-row" id="consent-row">
+          <div class="consent-box" id="consent-box"><span class="consent-tick">&#10003;</span></div>
+          <span class="consent-txt">By checking this box, I confirm that I have read or been read the information about this study, that I understand the purpose of the research and what participation involves, and that we voluntarily agree to participate. I understand that our participation is voluntary and that we may withdraw at any time without any negative consequences. We consent to the collection and use of my responses and images for research purposes.</span>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="form-submit" disabled>Submit</button>
+      <div class="form-msg" id="form-msg"></div>
+    </div>
+  </div>
+
+  <!-- PREVIEW -->
+  <div id="preview">
+    <div class="prev-lbl" id="prev-lbl">FRONT VIEW</div>
+    <div class="prev-img-wrap"><img id="prev-img" src="" alt=""><div class="prev-status" id="prev-status"></div></div>
+    <div class="prev-btns">
+      <button class="prev-btn retake" id="prev-retake">&#8617; Retake</button>
+      <button class="prev-btn proceed" id="prev-next">Next &rarr;</button>
+    </div>
+  </div>
+  <!-- Session expiry banner — shown mid-session, non-blocking -->
+  <div id="reauth-banner">
+    <span id="reauth-msg">Session expiring &mdash; sign in again</span>
+    <button id="reauth-btn" onclick="triggerReauth()">Sign in</button>
+  </div>
+</div>
+<script>
+(function(){
+'use strict';
+
+/* ── helpers first so all top-level wiring can use them ── */
+function g(id){return document.getElementById(id);}
+
+/* ── CONFIG ── */
+const C={
+  API:          'https://aimm-450300910281.asia-south1.run.app',
+  GID:          '450300910281-c42g9vc3q8f27la48e2j5vc6428nk7sj.apps.googleusercontent.com',
+  // tasks-vision CDN (no version pin = always latest)
+  TV_CDN:       'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision',
+  TV_WASM:      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm',
+  MODEL_URL:    'https://storage.googleapis.com/mediapipe-models/holistic_landmarker/holistic_landmarker/float16/latest/holistic_landmarker.task',
+  MODEL_CACHE:  'aimm-holistic',
+  CAM_H_DEFAULT:70,
+  CAM_H_KEY:    'aimm.camh',
+  TOKEN_KEY:    'aimm.token',
+  EXPIRY_KEY:   'aimm.expiry',
+  EMAIL_KEY:    'aimm.email',
+  THEME_KEY:    'aimm.theme',
+  REFRESH_AHEAD:5*60*1000,
+  ARM_RAISE_DEG:45,
+  BODY_MIN:     0.60,  // min nose-to-ankle span fraction (person must fill ≥60% of frame height)
+  BODY_MAX:     0.96,  // max span fraction (only fails if person edge-to-edge)
+  BODY_SPAN_MIN:0.40,  // min span for checkBody landmark visibility test
+  BRIGHT_MIN:   50,
+  SHAKE_RMS:    2.45,
+  SHAKE_SETTLE: 500,
+  TILT_BETA:    10,
+  TILT_GAMMA:   10,
+  GEO_TIMEOUT:  5000,
+  // mask scan: threshold and min consecutive fg pixels per row
+  MASK_THR:     0.4,  // MPMask foreground threshold [0-1]
+  SCAN_MIN_W:   3,    // min consecutive fg pixels per row (works for newborn side-on)
+};
+
+/* ── STATE ── */
+const S={
+  token:null, expiry:null, email:null, refreshTimer:null, authResolve:null,
+  uuid:null, location:null, camH:C.CAM_H_DEFAULT,
+  phase:'front',
+  frontBlob:null, sideBlob:null,
+  frontDone:false, sideDone:false,
+  frontErr:null, sideErr:null,
+  holistic:null, mpReady:false,
+  camStream:null, camRunning:false, lastVideoTime:-1,
+  checks:{light:false,steady:false,level:false,body:false,dist:false,pose:false},
+  blockMode:true,
+  lastPose:null, lastFace:null,
+  shakeOk:true, shakeTmr:null, lastAcc:{x:0,y:0,z:0},
+  sensorFired:false,
+  popupMode:'front-normal',
+  consentOn:false, genderVal:null, litVal:null,
+  setupPhase:'idle',
+  // height data (from mask pixel scan)
+  frontHeight:null, frontPpNorm:null, frontPcNorm:null,
+  sideHeight:null,  sidePpNorm:null,  sidePcNorm:null,
+  _lastHcm:null, _lastPpNorm:null, _lastPcNorm:null,
+  _lastTopRow:null, _lastBotRow:null, _lastMH:null, // in mask-native row coords (0..mH)
+  _reauthScreen:null, // screen to return to after mid-session re-auth
+  _pollSideCount:0,
+};
+
+/* ── THEME ── */
+let dark=localStorage.getItem(C.THEME_KEY)==='dark'||
+  (!localStorage.getItem(C.THEME_KEY)&&matchMedia('(prefers-color-scheme:dark)').matches);
+function applyTheme(){dark?document.documentElement.setAttribute('data-dark',''):document.documentElement.removeAttribute('data-dark');localStorage.setItem(C.THEME_KEY,dark?'dark':'light');}
+applyTheme();
+function toggleTheme(){dark=!dark;applyTheme();}
+g('h-theme').addEventListener('click',toggleTheme);
+g('cam-theme').addEventListener('click',toggleTheme);
+
+/* ── DEVICE CHECK ── */
+function chkDev(){const mob=/Android|iPhone|iPad|iPod|Mobile|Tablet/i.test(navigator.userAgent);if(!mob&&innerWidth>=1024){g('dwall').style.display='flex';g('app').style.display='none';}}
+chkDev();addEventListener('resize',chkDev);
+
+/* ── SCREEN / HELPERS ── */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  g(id).classList.add('on');
+  const isCam=id==='s-camera',isSess=id==='s-session';
+  g('header').style.display=isCam?'none':'flex';
+  g('h-signout').classList.toggle('hidden',!isSess&&id!=='s-form');
+  g('h-reset').classList.toggle('hidden',id!=='s-form');
+}
+function setStep(id,state,msg){
+  const row=g(id),ico=g(id+'-ico'),msgEl=g(id+'-msg');
+  row.className='step-row '+(state||'');
+  if(msg!==undefined&&msgEl)msgEl.textContent=msg;
+  if(!ico)return;
+  const nums={'st-cam':'1','st-loc':'2','st-auth':'3','st-model':'4'};
+  if(state==='active')ico.innerHTML='<div class="spin"></div>';
+  else if(state==='done')ico.textContent='\u2713';
+  else if(state==='err')ico.textContent='\u2717';
+  else ico.textContent=nums[id]||'?';
+}
+function setProg(pct,lbl){if(pct!==null)g('prog-fill').style.width=pct+'%';if(lbl)g('prog-lbl').textContent=lbl;}
+function showErr(title,msg){g('err-box').classList.add('on');g('err-title').textContent=title;g('err-msg').textContent=msg;}
+function clearErr(){g('err-box').classList.remove('on');}
+
+/* ── SETUP FLOW ── */
+async function runSetup(){
+  clearErr();g('g-signin').style.display='none';
+  if(_retryBtn){_retryBtn.remove();_retryBtn=null;}
+
+  /* 1 — Camera permission */
+  S.setupPhase='cam';
+  setStep('st-cam','active','Requesting camera access\u2026');setProg(5,'Requesting camera\u2026');
+  try{
+    let stream=null;
+    for(const c of[
+      {video:{facingMode:{exact:'environment'}},audio:false},
+      {video:{facingMode:'environment'},audio:false},
+    ]){try{stream=await navigator.mediaDevices.getUserMedia(c);break;}catch(e){}}
+    if(!stream)throw new Error('No rear camera found');
+    stream.getTracks().forEach(t=>t.stop());
+    setStep('st-cam','done','Camera access granted');
+  }catch(e){
+    setStep('st-cam','err',e.message);showErr('Camera required',e.message);
+    showRetryBtn('cam');return;
+  }
+
+  /* Sensors — request permission, fallback after 3s */
+  S.sensorFired=false;
+  let sensorTimeout=null;
+  function onSensorFired(){
+    if(S.sensorFired)return;S.sensorFired=true;
+    if(sensorTimeout)clearTimeout(sensorTimeout);
+  }
+  if(typeof DeviceOrientationEvent!=='undefined'){
+    if(typeof DeviceOrientationEvent.requestPermission==='function')try{await DeviceOrientationEvent.requestPermission();}catch(e){}
+    addEventListener('deviceorientation',e=>{onSensorFired();onOrientation(e);});
+  }else{S.checks.level=true;S.sensorFired=true;}
+  if(typeof DeviceMotionEvent!=='undefined'){
+    if(typeof DeviceMotionEvent.requestPermission==='function')try{await DeviceMotionEvent.requestPermission();}catch(e){}
+    addEventListener('devicemotion',e=>{onSensorFired();onMotion(e);});
+  }else{S.checks.steady=true;}
+  // If no event fires within 3s, degrade gracefully
+  sensorTimeout=setTimeout(()=>{if(!S.sensorFired){S.checks.level=true;S.checks.steady=true;}},3000);
+
+  /* 2 — Location */
+  S.setupPhase='loc';
+  setStep('st-loc','active','Acquiring GPS\u2026');setProg(25,'Acquiring location\u2026');
+  const locOk=await getLocation();
+  if(!locOk){setStep('st-loc','err','Location required');showErr('Location required','Allow location access and retry.');showRetryBtn('loc');return;}
+
+  /* 3 — Auth */
+  S.setupPhase='auth';setProg(45,'Waiting for sign-in\u2026');
+  const authOk=await doAuth();
+  if(!authOk)return;
+
+  /* 4 — Model */
+  S.setupPhase='model';setProg(60,'Loading holistic model\u2026');
+  const modelOk=await loadModel();
+  if(!modelOk)return;
+
+  S.setupPhase='done';setProg(100,'Ready');
+  setTimeout(()=>goSession(),350);
+}
+
+let _retryBtn=null;
+function showRetryBtn(){
+  if(_retryBtn)_retryBtn.remove();
+  const b=document.createElement('button');
+  b.className='btn btn-ghost';b.textContent='Retry';
+  b.onclick=()=>{b.remove();_retryBtn=null;S.setupPhase='idle';runSetup();};
+  _retryBtn=b;
+  g('s-setup').querySelector('.sp').appendChild(b);
+}
+
+/* ── LOCATION ── */
+function getLocation(){
+  return new Promise(resolve=>{
+    if(!navigator.geolocation){resolve(false);return;}
+    let bestAcc=Infinity,settled=false,watchId=null;
+    function done(loc,ok){
+      if(settled)return;settled=true;
+      if(watchId!==null)navigator.geolocation.clearWatch(watchId);
+      if(ok){S.location=loc;setStep('st-loc','done',`${loc.lat.toFixed(5)}, ${loc.lon.toFixed(5)} \u00b1${loc.acc.toFixed(0)}m`);}
+      resolve(ok);
+    }
+    watchId=navigator.geolocation.watchPosition(
+      pos=>{
+        const acc=pos.coords.accuracy;
+        if(acc<bestAcc){
+          bestAcc=acc;
+          const loc={lat:pos.coords.latitude,lon:pos.coords.longitude,acc};
+          setStep('st-loc','active',`${loc.lat.toFixed(5)}, ${loc.lon.toFixed(5)} \u00b1${acc.toFixed(0)}m`);
+          S.location=loc;
+          if(acc<=15)done(loc,true);
+        }
+      },
+      err=>{done(null,false);},
+      {enableHighAccuracy:true,timeout:C.GEO_TIMEOUT,maximumAge:0}
+    );
+    setTimeout(()=>{if(settled)return;if(S.location)done(S.location,true);else done(null,false);},C.GEO_TIMEOUT+500);
+  });
+}
+
+/* ── AUTH ── */
+function doAuth(){
+  return new Promise(resolve=>{
+    setStep('st-auth','active','Checking saved session\u2026');
+    const tk=localStorage.getItem(C.TOKEN_KEY),ex=parseInt(localStorage.getItem(C.EXPIRY_KEY)||'0',10),em=localStorage.getItem(C.EMAIL_KEY)||'';
+    if(tk&&ex>Date.now()+60000&&em){
+      S.token=tk;S.expiry=ex;S.email=em;scheduleRefresh(ex);
+      verifyServer().then(ok=>{if(ok){setStep('st-auth','done',em);resolve(true);}else{clearStoredAuth();promptSignIn(resolve);}});
+      return;
+    }
+    clearStoredAuth();promptSignIn(resolve);
+  });
+}
+function promptSignIn(resolve){
+  setStep('st-auth','active','Sign in to continue');
+  waitForGIS(()=>{
+    google.accounts.id.initialize({client_id:C.GID,callback:cred=>handleCredential(cred,resolve),auto_select:true});
+    google.accounts.id.prompt(n=>{if(n.isSkippedMoment()||n.isDismissedMoment()){g('g-signin').style.display='flex';g('g-signin').disabled=false;S.authResolve=resolve;}});
+  });
+}
+window.triggerSignIn=function(){
+  g('g-signin').disabled=true;
+  waitForGIS(()=>{google.accounts.id.prompt(n=>{if(n.isSkippedMoment()||n.isDismissedMoment()){g('g-signin').disabled=false;showErr('Sign-in dismissed','Please try again.');}});});
+};
+function handleCredential(cred,resolve){
+  g('g-signin').style.display='none';clearErr();
+  hideReauthBanner();
+  try{
+    const p=JSON.parse(atob(cred.credential.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+    S.token=cred.credential;S.expiry=p.exp*1000;S.email=p.email||'';
+    localStorage.setItem(C.TOKEN_KEY,S.token);localStorage.setItem(C.EXPIRY_KEY,String(S.expiry));localStorage.setItem(C.EMAIL_KEY,S.email);
+    scheduleRefresh(S.expiry);
+    // If this was a mid-session reauth, continue from where we were
+    if(S._reauthScreen){
+      const scr=S._reauthScreen;S._reauthScreen=null;
+      showScreen(scr);
+      // If camera was active, restart cam
+      if(scr==='s-camera')startCam();
+      return;
+    }
+    setStep('st-auth','active','Verifying\u2026');
+    verifyServer().then(ok=>{
+      if(ok){setStep('st-auth','done',S.email);const res=resolve||S.authResolve;S.authResolve=null;if(res)res(true);}
+      else{setStep('st-auth','err','Server verification failed');showErr('Verification failed','Check network and retry.');showRetryBtn();}
+    });
+  }catch(e){setStep('st-auth','err',e.message);showErr('Auth error',e.message);showRetryBtn();}
+}
+async function verifyServer(){try{const r=await fetchWithTimeout(C.API+'/',{method:'GET',headers:{'Authorization':'Bearer '+S.token}},10000);return r.ok;}catch(e){return false;}}
+function clearStoredAuth(){localStorage.removeItem(C.TOKEN_KEY);localStorage.removeItem(C.EXPIRY_KEY);localStorage.removeItem(C.EMAIL_KEY);}
+function scheduleRefresh(exp){if(S.refreshTimer)clearTimeout(S.refreshTimer);S.refreshTimer=setTimeout(silentRefresh,Math.max(0,exp-Date.now()-C.REFRESH_AHEAD));}
+
+let _silentRefreshAttempts=0;
+function silentRefresh(){
+  waitForGIS(()=>{
+    google.accounts.id.initialize({client_id:C.GID,callback:cred=>{
+      _silentRefreshAttempts=0;
+      handleCredential(cred,null);
+    },auto_select:true});
+    google.accounts.id.prompt(n=>{
+      if(n.isSkippedMoment()||n.isDismissedMoment()){
+        _silentRefreshAttempts++;
+        if(_silentRefreshAttempts<=2){
+          // retry once more after 60s
+          setTimeout(silentRefresh,60000);
+          showReauthBanner('Session expiring \u2014 sign in again');
+        }else{
+          // give up — show expiry banner but don't destroy session yet
+          showReauthBanner('Session expired \u2014 sign in to continue');
+        }
+      }
+    });
+  });
+}
+
+function showReauthBanner(msg){
+  g('reauth-msg').textContent=msg;
+  g('reauth-banner').classList.add('on');
+}
+function hideReauthBanner(){
+  g('reauth-banner').classList.remove('on');
+}
+
+// Called when user taps "Sign in" on the reauth banner mid-session
+window.triggerReauth=function(){
+  // remember which screen we're on so we can return after reauth
+  const currentScreen=document.querySelector('.screen.on');
+  S._reauthScreen=currentScreen?currentScreen.id:null;
+  waitForGIS(()=>{
+    google.accounts.id.initialize({client_id:C.GID,callback:cred=>handleCredential(cred,null),auto_select:false});
+    google.accounts.id.prompt(n=>{
+      if(n.isSkippedMoment()||n.isDismissedMoment()){
+        // One Tap didn't work — show full sign-in button overlay
+        g('g-signin').style.display='flex';g('g-signin').disabled=false;
+        S.authResolve=null;
+        // temporarily show setup screen sign-in area
+        showScreen('s-setup');
+        setStep('st-auth','active','Sign in to resume session');
+      }
+    });
+  });
+};
+
+function waitForGIS(cb){if(window.google&&window.google.accounts&&window.google.accounts.id){cb();return;}const t=setInterval(()=>{if(window.google&&window.google.accounts&&window.google.accounts.id){clearInterval(t);cb();}},100);}
+
+function doSignOut(){
+  if(S.refreshTimer)clearTimeout(S.refreshTimer);
+  const em=S.email;S.token=null;S.expiry=null;S.email=null;clearStoredAuth();
+  waitForGIS(()=>{google.accounts.id.disableAutoSelect();if(em)try{google.accounts.id.revoke(em,()=>{});}catch(e){}});
+  stopCam();S.setupPhase='idle';S._reauthScreen=null;
+  ['st-cam','st-loc','st-auth','st-model'].forEach(id=>setStep(id,'','Waiting\u2026'));
+  setProg(0,'Starting\u2026');clearErr();g('g-signin').style.display='none';
+  hideReauthBanner();
+  showScreen('s-setup');runSetup();
+}
+g('h-signout').addEventListener('click',doSignOut);
+g('cam-signout').addEventListener('click',doSignOut);
+
+/* apiFetch: auto-retry once after silent token refresh on 401 */
+async function apiFetch(path,method,body,isForm,_retry){
+  if(!S.token)throw new Error('Not authenticated');
+  const hdrs={'Authorization':'Bearer '+S.token};
+  if(!isForm)hdrs['Content-Type']='application/json';
+  const opts={method,headers:hdrs};if(body)opts.body=isForm?body:JSON.stringify(body);
+  const resp=await fetchWithTimeout(C.API+path,opts,30000);
+  if(resp.status===401&&!_retry){
+    // Token rejected — attempt one silent refresh then retry
+    await new Promise(res=>{
+      waitForGIS(()=>{
+        google.accounts.id.initialize({client_id:C.GID,callback:cred=>{handleCredential(cred,null);res();},auto_select:true});
+        google.accounts.id.prompt(n=>{if(n.isSkippedMoment()||n.isDismissedMoment()){showReauthBanner('Session expired \u2014 sign in to continue');res();}});
+      });
+    });
+    return apiFetch(path,method,body,isForm,true);
+  }
+  return resp;
+}
+
+/* ── MODEL — tasks-vision HolisticLandmarker ── */
+let _cachingInstalled=false;
+
+async function installCachingFetch(){
+  if(_cachingInstalled||!('caches' in window))return;
+  _cachingInstalled=true;
+  const CACHE=C.MODEL_CACHE;
+  const PREFIXES=[
+    'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision',
+    'https://storage.googleapis.com/mediapipe-models/',
+  ];
+  const _orig=window.fetch.bind(window);
+  window.fetch=async function(input,...args){
+    const url=typeof input==='string'?input:(input&&input.url)||'';
+    if(!PREFIXES.some(p=>url.startsWith(p)))return _orig(input,...args);
+    try{
+      const cache=await caches.open(CACHE);
+      const hit=await cache.match(url);
+      if(hit)return hit;
+      const resp=await _orig(input,...args);
+      if(resp&&resp.ok)cache.put(url,resp.clone());
+      return resp;
+    }catch(e){return _orig(input,...args);}
+  };
+}
+
+async function loadModel(){
+  return new Promise(async resolve=>{
+    setStep('st-model','active','Preparing cache\u2026');
+    g('st-model-bar').style.display='block';
+    await installCachingFetch();
+    let pct=0;
+    const anim=setInterval(()=>{pct=Math.min(pct+1.2,88);g('st-model-fill').style.width=pct+'%';},200);
+    setStep('st-model','active','Loading (cached after first load)\u2026');
+    try{
+      // Dynamic import of the tasks-vision ESM bundle
+      const tv=await import(C.TV_CDN+'/vision_bundle.mjs');
+      const {HolisticLandmarker,FilesetResolver}=tv;
+      const vision=await FilesetResolver.forVisionTasks(C.TV_WASM);
+      const hl=await HolisticLandmarker.createFromOptions(vision,{
+        baseOptions:{modelAssetPath:C.MODEL_URL,delegate:'GPU'},
+        runningMode:'VIDEO',
+        outputPoseSegmentationMasks:true,
+        outputFaceBlendshapes:false,
+        minFaceDetectionConfidence:0.5,
+        minFaceSuppressionThreshold:0.3,
+        minFacePresenceConfidence:0.5,
+        minPoseDetectionConfidence:0.5,
+        minPoseSuppressionThreshold:0.3,
+        minPosePresenceConfidence:0.5,
+        minHandLandmarksConfidence:0.5,
+      });
+      clearInterval(anim);g('st-model-fill').style.width='100%';
+      S.holistic=hl;
+      S.mpReady=true;
+      // Store HolisticLandmarker class for connection arrays (POSE_CONNECTIONS etc)
+      window._HL=HolisticLandmarker;
+      setStep('st-model','done','Model ready');setProg(95,'Model loaded');
+      resolve(true);
+    }catch(e){
+      clearInterval(anim);
+      // GPU delegate failed — retry with CPU
+      if(e.message&&e.message.toLowerCase().includes('gpu')){
+        try{
+          const tv2=await import(C.TV_CDN+'/vision_bundle.mjs');
+          const {HolisticLandmarker:HL2,FilesetResolver:FR2}=tv2;
+          const vision2=await FR2.forVisionTasks(C.TV_WASM);
+          const hl2=await HL2.createFromOptions(vision2,{
+            baseOptions:{modelAssetPath:C.MODEL_URL,delegate:'CPU'},
+            runningMode:'VIDEO',
+            outputPoseSegmentationMasks:true,
+            outputFaceBlendshapes:false,
+            minFaceDetectionConfidence:0.5,minFaceSuppressionThreshold:0.3,minFacePresenceConfidence:0.5,
+            minPoseDetectionConfidence:0.5,minPoseSuppressionThreshold:0.3,minPosePresenceConfidence:0.5,
+            minHandLandmarksConfidence:0.5,
+          });
+          g('st-model-fill').style.width='100%';
+          S.holistic=hl2;S.mpReady=true;
+          window._HL=HL2;
+          setStep('st-model','done','Model ready (CPU)');setProg(95,'Model loaded');
+          resolve(true);return;
+        }catch(e2){}
+      }
+      setStep('st-model','err',e.message.slice(0,80));
+      showErr('Model failed',e.message+'\n\nCheck network and retry.');
+      showRetryBtn();resolve(false);
+    }
+  });
+}
+
+window.skipModel=function(){};// model is mandatory
+
+/* ── SESSION ── */
+function goSession(){
+  S.uuid=genUUID();
+  S.frontBlob=null;S.sideBlob=null;S.frontDone=false;S.sideDone=false;S.frontErr=null;S.sideErr=null;
+  S.frontHeight=null;S.frontPpNorm=null;S.frontPcNorm=null;
+  S.sideHeight=null;S.sidePpNorm=null;S.sidePcNorm=null;
+  S.phase='front';
+  g('sess-uuid').textContent=S.uuid;
+  const dot=g('loc-dot'),val=g('loc-val');
+  if(S.location){dot.className='loc-dot ok';val.textContent=`${S.location.lat.toFixed(5)}, ${S.location.lon.toFixed(5)} \u00b1${S.location.acc.toFixed(0)}m`;}
+  else{dot.className='loc-dot err';val.textContent='Location unavailable';}
+  const saved=parseFloat(localStorage.getItem(C.CAM_H_KEY));
+  S.camH=isNaN(saved)?C.CAM_H_DEFAULT:saved;
+  g('camh-input').value=S.camH;
+  g('h-signout').classList.remove('hidden');
+  showScreen('s-session');
+}
+function genUUID(){const ch='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',a=new Uint8Array(32);crypto.getRandomValues(a);return Array.from(a,b=>ch[b%ch.length]).join('');}
+g('camh-input').addEventListener('input',function(){const v=parseFloat(this.value);if(!isNaN(v)&&v>0){S.camH=v;localStorage.setItem(C.CAM_H_KEY,v);}});
+g('sess-go').addEventListener('click',()=>{const v=parseFloat(g('camh-input').value);if(!isNaN(v)&&v>0)S.camH=v;beginCapture('front');});
+function newSession(){stopCam();goSession();}
+g('h-reset').addEventListener('click',newSession);
+g('cam-reset').addEventListener('click',newSession);
+
+/* ── CAMERA ── */
+const vid=g('vid');
+const mCvs=g('c-mask');
+const pCvs=g('c-pose');
+const mCtx=mCvs.getContext('2d');
+const pCtx=pCvs.getContext('2d');
+// brightness sampling canvas (persistent)
+const bCvs=document.createElement('canvas');bCvs.width=32;bCvs.height=32;
+const bCtx=bCvs.getContext('2d',{willReadFrequently:true});
+// mask compositing canvas (persistent, self-sizes to mask native resolution each frame)
+const maskTmp=document.createElement('canvas');
+
+function syncCanvasSize(){
+  // canvases must match the video element's rendered size exactly
+  const w=vid.offsetWidth||vid.clientWidth||1;
+  const h=vid.offsetHeight||vid.clientHeight||1;
+  if(mCvs.width!==w||mCvs.height!==h){mCvs.width=w;mCvs.height=h;}
+  if(pCvs.width!==w||pCvs.height!==h){pCvs.width=w;pCvs.height=h;}
+  // position canvases on top of video (video height = auto, need explicit pixel size)
+  mCvs.style.width=w+'px';mCvs.style.height=h+'px';
+  pCvs.style.width=w+'px';pCvs.style.height=h+'px';
+  // cam-viewport height = video natural height
+  g('cam-viewport').style.height=h+'px';
+}
+if(window.ResizeObserver){new ResizeObserver(()=>{if(S.camRunning)syncCanvasSize();}).observe(vid);}
+
+function beginCapture(phase){
+  S.phase=phase;
+  updatePoseSil();
+  g('cam-phase-lbl').textContent=phase==='front'?'FRONT VIEW':'SIDE VIEW';
+  // reset realtime displays
+  g('hval-cur').textContent='\u2014';g('hval-cur').className='h-val dim';
+  if(!S.mpReady)activateNoPose();
+  showScreen('s-camera');
+  startCam();
+}
+
+function startCam(){
+  stopCam();S.camRunning=false;
+  // Request portrait video — no size constraints, let device choose native 3:4
+  const tryList=[
+    {video:{facingMode:{exact:'environment'}},audio:false},
+    {video:{facingMode:'environment'},audio:false},
+    {video:true,audio:false},
+  ];
+  async function tryNext(i){
+    if(i>=tryList.length){g('guide-txt').textContent='Camera unavailable';return;}
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia(tryList[i]);
+      S.camStream=stream;vid.srcObject=stream;
+      vid.onloadeddata=()=>{
+        S.camRunning=true;S.lastVideoTime=-1;
+        syncCanvasSize();
+        requestAnimationFrame(camTick);
+      };
+      vid.onerror=()=>tryNext(i+1);
+    }catch(e){tryNext(i+1);}
+  }
+  tryNext(0);
+}
+
+function stopCam(){
+  S.camRunning=false;
+  if(S.camStream){S.camStream.getTracks().forEach(t=>t.stop());S.camStream=null;}
+  mCtx.clearRect(0,0,mCvs.width,mCvs.height);
+  pCtx.clearRect(0,0,pCvs.width,pCvs.height);
+}
+
+let _lastDetectT=0;
+function camTick(){
+  if(!S.camRunning)return;
+  syncCanvasSize();
+  sampleBright();
+  const now=performance.now();
+  if(S.mpReady&&S.holistic&&vid.readyState>=2){
+    // throttle inference to ~14fps max to avoid queueing (same as ar.html)
+    if(now-_lastDetectT>=70){
+      _lastDetectT=now;
+      try{
+        // SYNC call — result returned directly, no callback
+        const result=S.holistic.detectForVideo(vid,now);
+        drawResults(result);
+      }catch(e){
+        console.warn('detectForVideo:',e);
+        mCtx.clearRect(0,0,mCvs.width,mCvs.height);
+        pCtx.clearRect(0,0,pCvs.width,pCvs.height);
+        updateHBadge(null);
+        updateUI();
+      }
+    }
+  }else if(!S.mpReady){
+    mCtx.clearRect(0,0,mCvs.width,mCvs.height);
+    pCtx.clearRect(0,0,pCvs.width,pCvs.height);
+    updateUI();
+  }
+  requestAnimationFrame(camTick);
+}
+
+/* ── OVERLAY DRAWING — mirrors ar.html approach exactly ──────────────────
+   Uses raw canvas 2D API (no DrawingUtils dependency).
+   Face index arrays hardcoded from MediaPipe face mesh map.
+   Pose/hand connections from HolisticLandmarker static properties.
+   drawResults() is called with the SYNC result object from detectForVideo.
+────────────────────────────────────────────────────────────────────────── */
+
+// Face mesh index arrays (same as ar.html)
+const FOVAL=[10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109];
+const FLEYE=[33,7,163,144,145,153,154,155,133,173,157,158,159,160,161,246];
+const FREYE=[362,382,381,380,374,373,390,249,263,466,388,387,386,385,384,398];
+const FLIPS=[61,185,40,39,37,0,267,269,270,409,291,375,321,405,314,17,84,181,91,146];
+
+// lx/ly: landmark normalised coords → canvas pixels (no crop needed with height:auto video)
+function lx(lm,W){return lm.x*W;}
+function ly(lm,H){return lm.y*H;}
+
+function drawResults(result){
+  if(!S.camRunning)return;
+  const W=mCvs.width,H=mCvs.height;
+
+  // Extract landmarks up-front — needed for height calculation AND overlay drawing
+  const pose=result.poseLandmarks&&result.poseLandmarks[0];
+  const face=result.faceLandmarks&&result.faceLandmarks[0];
+  const lhand=result.leftHandLandmarks&&result.leftHandLandmarks[0];
+  const rhand=result.rightHandLandmarks&&result.rightHandLandmarks[0];
+
+  /* ── CANVAS 1: body segmentation mask (mCvs) ── */
+  mCtx.clearRect(0,0,W,H);
+  const mask=result.poseSegmentationMasks&&result.poseSegmentationMasks[0];
+  if(mask){
+    try{
+      const mW=mask.width,mH=mask.height;
+      const d=mask.getAsFloat32Array();
+      // size maskTmp to mask native resolution each frame
+      if(maskTmp.width!==mW||maskTmp.height!==mH){maskTmp.width=mW;maskTmp.height=mH;}
+      const tc=maskTmp.getContext('2d');
+      const id=tc.createImageData(mW,mH);
+      for(let i=0;i<mW*mH;i++){
+        const v=d[i],r=i*4;
+        if(v>0.4){id.data[r]=0;id.data[r+1]=220;id.data[r+2]=180;id.data[r+3]=Math.round(v*68);}
+      }
+      tc.putImageData(id,0,0);
+      mCtx.drawImage(maskTmp,0,0,W,H);
+      computeHeightFromMask(d,mW,mH,W,H,pose,face);
+    }catch(e){updateHBadge(null);console.warn('mask:',e);}
+    finally{try{mask.close();}catch(e){}}
+  }else{
+    updateHBadge(null);
+  }
+
+  /* ── CANVAS 2: landmarks overlay (pCvs) ── */
+  pCtx.clearRect(0,0,W,H);
+
+  /* Face mesh fill + contours */
+  if(face){
+    // Face oval filled — blue
+    pCtx.beginPath();
+    FOVAL.forEach((i,j)=>{
+      if(!face[i])return;
+      j===0?pCtx.moveTo(lx(face[i],W),ly(face[i],H)):pCtx.lineTo(lx(face[i],W),ly(face[i],H));
+    });
+    pCtx.closePath();
+    pCtx.fillStyle='rgba(72,130,255,0.18)';pCtx.fill();
+    pCtx.strokeStyle='rgba(72,130,255,0.60)';pCtx.lineWidth=1.2;pCtx.stroke();
+    // Eye contours — cyan
+    const contour=(pts,col,lw)=>{
+      pCtx.beginPath();
+      pts.forEach((i,j)=>{if(!face[i])return;j===0?pCtx.moveTo(lx(face[i],W),ly(face[i],H)):pCtx.lineTo(lx(face[i],W),ly(face[i],H));});
+      pCtx.strokeStyle=col;pCtx.lineWidth=lw||1;pCtx.stroke();
+    };
+    contour(FLEYE,'rgba(0,220,175,0.75)',1.2);
+    contour(FREYE,'rgba(0,220,175,0.75)',1.2);
+    contour(FLIPS,'rgba(245,80,90,0.60)',1.4);
+    // Face landmark dots — tiny white
+    pCtx.fillStyle='rgba(255,255,255,0.25)';
+    face.forEach(lm=>{
+      if(!lm)return;
+      pCtx.beginPath();pCtx.arc(lx(lm,W),ly(lm,H),0.8,0,Math.PI*2);pCtx.fill();
+    });
+  }
+
+  /* Pose skeleton — green */
+  if(pose){
+    S.lastPose=pose;S.lastFace=face||null;
+    const PC=window._HL&&window._HL.POSE_CONNECTIONS;
+    const lw=Math.max(2,W*0.004);
+    pCtx.strokeStyle='rgba(0,220,175,0.85)';pCtx.lineWidth=lw;
+    if(PC){
+      PC.forEach(conn=>{
+        const a=conn.start??conn[0],b=conn.end??conn[1];
+        const la=pose[a],lb=pose[b];
+        if(!la||!lb)return;
+        if((la.visibility??1)<0.3||(lb.visibility??1)<0.3)return;
+        pCtx.beginPath();pCtx.moveTo(lx(la,W),ly(la,H));pCtx.lineTo(lx(lb,W),ly(lb,H));pCtx.stroke();
+      });
+    }
+    pose.forEach(lm=>{
+      if(!lm||(lm.visibility??1)<0.25)return;
+      pCtx.beginPath();pCtx.arc(lx(lm,W),ly(lm,H),3.5,0,Math.PI*2);
+      pCtx.fillStyle='rgba(0,232,184,1)';pCtx.fill();
+    });
+    runChecks(pose);
+  }else{
+    S.lastPose=null;
+    S.checks.body=false;S.checks.dist=false;S.checks.pose=false;
+  }
+
+  /* Hands — left=amber, right=purple */
+  const HC=window._HL&&window._HL.HAND_CONNECTIONS;
+  function drawHand(lms,col,fill){
+    if(!lms||!lms.length)return;
+    pCtx.beginPath();
+    [0,1,5,9,13,17,0].forEach((i,j)=>{
+      if(!lms[i])return;
+      j===0?pCtx.moveTo(lx(lms[i],W),ly(lms[i],H)):pCtx.lineTo(lx(lms[i],W),ly(lms[i],H));
+    });
+    pCtx.fillStyle=fill;pCtx.fill();
+    if(HC){
+      pCtx.strokeStyle=col;pCtx.lineWidth=1.8;
+      HC.forEach(conn=>{
+        const a=conn.start??conn[0],b=conn.end??conn[1];
+        if(!lms[a]||!lms[b])return;
+        pCtx.beginPath();pCtx.moveTo(lx(lms[a],W),ly(lms[a],H));pCtx.lineTo(lx(lms[b],W),ly(lms[b],H));pCtx.stroke();
+      });
+    }
+    pCtx.fillStyle=col;
+    lms.forEach(lm=>{
+      if(!lm)return;
+      pCtx.beginPath();pCtx.arc(lx(lm,W),ly(lm,H),2.5,0,Math.PI*2);pCtx.fill();
+    });
+  }
+  drawHand(lhand,'rgba(240,185,50,0.9)','rgba(240,185,50,0.12)');
+  drawHand(rhand,'rgba(176,96,240,0.9)','rgba(176,96,240,0.12)');
+
+  // × marker at top of measured height span
+  drawHeightOverlay();
+  updateUI();
+}
+
+/* ── HEIGHT CALCULATION ────────────────────────────────────────────────────
+   Pp = top-of-head to sole-of-foot in display pixels
+   Pc = sole-of-foot to image centre (camera optical axis) in display pixels
+   H  = camH_cm × Pp / Pc
+
+   BOTTOM (botRow): always a full-width mask scan bottom-to-top — reliable
+   for feet regardless of view direction or arm position.
+
+   TOP (topRow): view-dependent, arm-safe:
+
+   FRONT VIEW — uses nose X as anchor for the head column:
+     1. noseCol = round(nose.x × mW), band = noseCol ± 5 columns
+     2. maskHeadRow: first row (top→down) in that band with any fg pixel > MASK_THR
+     3. faceHeadRow: round(min(face[*].y) × mH)  — topmost face mesh point
+     4. topRow = min(maskHeadRow, faceHeadRow)     — whichever is higher in frame
+     Fallback (no nose/face): full-width mask scan (current behaviour)
+
+   SIDE VIEW — ear X + shoulder X give head column candidates:
+     1. Collect candidate X positions: both ear landmarks (93,132,361,389 in face mesh)
+        + dominant shoulder (higher visibility of lm[11]/lm[12])
+     2. For each candidate: scan a ±5 column band in the mask top→down, take first fg row
+     3. faceHeadRow = round(min(face[*].y) × mH)
+     4. topRow = min of all candidate rows (highest point found)
+     Fallback (no face/pose): full-width mask scan
+──────────────────────────────────────────────────────────────────────────── */
+function computeHeightFromMask(f32,mW,mH,dispW,dispH,pose,face){
+  if(!f32||!mW||!mH||dispH===0){updateHBadge(null);return;}
+  const THR=C.MASK_THR;
+  const BAND=5; // ± columns around anchor for head scan
+
+  /* ── helper: scan top→down in column band [colLo..colHi], return first fg row ── */
+  function scanTopInBand(colLo,colHi){
+    colLo=Math.max(0,colLo);colHi=Math.min(mW-1,colHi);
+    for(let row=0;row<mH;row++){
+      for(let col=colLo;col<=colHi;col++){
+        if(f32[row*mW+col]>THR)return row;
+      }
+    }
+    return -1;
+  }
+
+  /* ── full-width mask scan for top (fallback) ── */
+  function scanTopFull(){
+    const MIN_W=C.SCAN_MIN_W;
+    outer:
+    for(let row=0;row<mH;row++){
+      let run=0;
+      for(let col=0;col<mW;col++){
+        if(f32[row*mW+col]>THR){run++;}else{run=0;}
+        if(run>=MIN_W){return row;}
+      }
+    }
+    return -1;
+  }
+
+  /* ── bottom: full-width scan bottom→top (unchanged, arm-safe for feet) ── */
+  let botRow=-1;
+  {
+    const MIN_W=C.SCAN_MIN_W;
+    outer_bot:
+    for(let row=mH-1;row>=0;row--){
+      let run=0;
+      for(let col=0;col<mW;col++){
+        if(f32[row*mW+col]>THR){run++;}else{run=0;}
+        if(run>=MIN_W){botRow=row;break outer_bot;}
+      }
+    }
+  }
+  if(botRow<0){updateHBadge(null);return;}
+
+  /* ── top: view-dependent head-column approach ── */
+  let topRow=-1;
+
+  if(S.phase==='front'){
+    /* FRONT: anchor on nose X ± 5 cols, then take min with face mesh min-Y */
+    const nose=pose&&pose[0];
+    if(nose){
+      const noseCol=Math.round(nose.x*mW);
+      const maskHeadRow=scanTopInBand(noseCol-BAND,noseCol+BAND);
+      // face mesh minimum Y → topmost head point
+      let faceHeadRow=mH; // pessimistic default
+      if(face&&face.length){
+        let minY=1;
+        for(let i=0;i<face.length;i++){if(face[i]&&face[i].y<minY)minY=face[i].y;}
+        faceHeadRow=Math.round(minY*mH);
+      }
+      // take the higher point (smaller row index)
+      if(maskHeadRow>=0)topRow=Math.min(maskHeadRow,faceHeadRow);
+      else if(faceHeadRow<mH)topRow=faceHeadRow;
+    }
+    // fallback: full-width scan
+    if(topRow<0)topRow=scanTopFull();
+
+  }else{
+    /* SIDE: multiple column anchors — ears + dominant shoulder + face mesh min-Y */
+    const candidates=[];
+
+    // Face mesh ear landmarks (tragus region — reliable in side view)
+    // Left ear: 93,132  Right ear: 361,389
+    if(face&&face.length){
+      [93,132,361,389].forEach(i=>{
+        if(face[i]){
+          const col=Math.round(face[i].x*mW);
+          const row=scanTopInBand(col-BAND,col+BAND);
+          if(row>=0)candidates.push(row);
+        }
+      });
+      // face mesh min-Y (topmost skull point regardless of orientation)
+      let minY=1;
+      for(let i=0;i<face.length;i++){if(face[i]&&face[i].y<minY)minY=face[i].y;}
+      const faceHeadRow=Math.round(minY*mH);
+      if(faceHeadRow<mH)candidates.push(faceHeadRow);
+    }
+
+    // Dominant shoulder (higher visibility)
+    if(pose){
+      const lv=(pose[11]&&pose[11].visibility)||0;
+      const rv=(pose[12]&&pose[12].visibility)||0;
+      const domShoulder=lv>=rv?pose[11]:pose[12];
+      if(domShoulder){
+        const col=Math.round(domShoulder.x*mW);
+        const row=scanTopInBand(col-BAND,col+BAND);
+        if(row>=0)candidates.push(row);
+      }
+    }
+
+    // Take the highest (smallest row index) among all candidates
+    if(candidates.length>0)topRow=Math.min(...candidates);
+    // fallback: full-width scan
+    if(topRow<0)topRow=scanTopFull();
+  }
+
+  if(topRow<0||botRow<=topRow){updateHBadge(null);return;}
+
+  /* ── geometry ── */
+  const topPx=(topRow/mH)*dispH;
+  const botPx=(botRow/mH)*dispH;
+  const midPx=dispH/2;
+
+  const Pp=botPx-topPx;
+  const Pc=botPx-midPx;
+
+  if(Pc<=0||Pp<=0){updateHBadge(null);return;}
+
+  const hcm=S.camH*Pp/Pc;
+  if(hcm<=0||hcm>350){updateHBadge(null);return;}
+
+  S._lastPpNorm=Pp/dispH;
+  S._lastPcNorm=Pc/dispH;
+  S._lastTopRow=topRow;
+  S._lastBotRow=botRow;
+  S._lastMH=mH;
+
+  updateHBadge(hcm);
+}
+
+function updateHBadge(hcm){
+  const el=g('hval-cur');
+  if(hcm===null){
+    el.textContent='\u2014';el.className='h-val dim';S._lastHcm=null;
+    // clear overlay state so stale × doesn't persist
+    S._lastTopRow=null;S._lastBotRow=null;S._lastMH=null;
+    S._lastPpNorm=null;S._lastPcNorm=null;
+  }else{
+    el.textContent=hcm.toFixed(1)+' cm';el.className='h-val';S._lastHcm=hcm;
+  }
+}
+
+/* Draw × at image centre (dispH/2) — the camera optical axis point, one end of Pc */
+function drawHeightOverlay(){
+  if(S._lastBotRow===null||S._lastMH===null)return;
+  const dispH=pCvs.height,dispW=pCvs.width;
+  const midPx=dispH/2;   // image centre = camera horizon = upper end of Pc
+  const cx=dispW/2;
+  const r=9;
+  pCtx.save();
+  pCtx.strokeStyle='rgba(255,210,50,0.95)';
+  pCtx.lineWidth=2.5;
+  pCtx.lineCap='round';
+  pCtx.beginPath();pCtx.moveTo(cx-r,midPx-r);pCtx.lineTo(cx+r,midPx+r);pCtx.stroke();
+  pCtx.beginPath();pCtx.moveTo(cx+r,midPx-r);pCtx.lineTo(cx-r,midPx+r);pCtx.stroke();
+  pCtx.restore();
+}
+
+/* ── BRIGHTNESS ── */
+function sampleBright(){
+  if(!vid.videoWidth)return;
+  try{bCtx.drawImage(vid,0,0,32,32);const d=bCtx.getImageData(0,0,32,32).data;let s=0;for(let i=0;i<d.length;i+=4)s+=d[i]*0.299+d[i+1]*0.587+d[i+2]*0.114;S.checks.light=(s/1024)>C.BRIGHT_MIN;}
+  catch(e){S.checks.light=true;}
+}
+
+/* ── SENSORS ── */
+function onOrientation(e){
+  const beta=e.beta||0, gamma=e.gamma||0;
+  const betaOk=Math.abs(beta-90)<C.TILT_BETA, gammaOk=Math.abs(gamma)<C.TILT_GAMMA;
+  S.checks.level=betaOk&&gammaOk;
+  // write live to display — green when within constraint, amber when outside
+  const bEl=g('hval-beta'), gEl=g('hval-gamma');
+  if(bEl){bEl.textContent=(beta).toFixed(1)+'\u00b0';bEl.className='h-val'+(betaOk?'':' dim');}
+  if(gEl){gEl.textContent=(gamma).toFixed(1)+'\u00b0';gEl.className='h-val'+(gammaOk?'':' dim');}
+}
+function onMotion(e){
+  const a=e.accelerationIncludingGravity;if(!a){S.checks.steady=true;return;}
+  const dx=Math.abs((a.x||0)-S.lastAcc.x),dy=Math.abs((a.y||0)-S.lastAcc.y),dz=Math.abs((a.z||0)-S.lastAcc.z);
+  S.lastAcc={x:a.x||0,y:a.y||0,z:a.z||0};
+  if(Math.sqrt(dx*dx+dy*dy+dz*dz)>C.SHAKE_RMS){S.shakeOk=false;clearTimeout(S.shakeTmr);S.shakeTmr=setTimeout(()=>{S.shakeOk=true;},C.SHAKE_SETTLE);}
+  S.checks.steady=S.shakeOk;
+}
+if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission!=='function')addEventListener('deviceorientation',onOrientation);
+if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission!=='function')addEventListener('devicemotion',onMotion);
+
+/* ── POSE CHECKS ── */
+function vis(lm,i,vt){
+  vt=vt||0.30;const p=lm[i];if(!p)return false;
+  return(p.visibility!==undefined?p.visibility:1)>=vt;
+}
+function runChecks(lm){
+  const nose=vis(lm,0,0.3)?lm[0]:null;
+  let ankleY=0;
+  [[27,0.3],[28,0.3],[29,0.25],[30,0.25]].forEach(function(x){if(vis(lm,x[0],x[1]))ankleY=Math.max(ankleY,lm[x[0]].y);});
+  const span=(nose&&ankleY>0)?ankleY-nose.y:0;
+  S.checks.dist=span>=C.BODY_MIN&&span<=C.BODY_MAX;
+  S.checks.body=checkBody(lm,span);
+  S.checks.pose=S.phase==='front'?checkFront(lm):checkSide(lm);
+}
+function checkBody(lm,span){
+  if(span<C.BODY_SPAN_MIN)return false;
+  if(S.phase==='front'){
+    if(![0,11,12,23,24].every(i=>vis(lm,i,0.35)))return false;
+    return[13,14,25,26,27,28].filter(i=>vis(lm,i,0.25)).length>=3;
+  }
+  const lv=(lm[11]&&lm[11].visibility)||0,rv=(lm[12]&&lm[12].visibility)||0;
+  const arr=lv>=rv?[11,13,23,25,27]:[12,14,24,26,28];
+  if(!vis(lm,0,0.3)||!vis(lm,arr[0],0.35)||!vis(lm,arr[2],0.35))return false;
+  return[arr[1],arr[3],arr[4]].filter(i=>vis(lm,i,0.25)).length>=2;
+}
+function checkFront(lm){
+  if(![11,12,13,14,23,24].every(i=>vis(lm,i,0.25)))return false;
+  const ls=lm[11],rs=lm[12],le=lm[13],re=lm[14],lh=lm[23],rh=lm[24];
+  if(Math.abs(rs.x-ls.x)<0.08)return false;
+  const tx=((ls.x+rs.x)/2)-((lh.x+rh.x)/2),ty=((ls.y+rs.y)/2)-((lh.y+rh.y)/2),tl=Math.sqrt(tx*tx+ty*ty);
+  if(tl<0.05)return false;
+  function ang(sh,el){const ax=el.x-sh.x,ay=el.y-sh.y,al=Math.sqrt(ax*ax+ay*ay);if(al<0.02)return 0;const a=Math.acos(Math.max(-1,Math.min(1,(ax*tx+ay*ty)/(al*tl))))*180/Math.PI;return a>90?180-a:a;}
+  return ang(ls,le)>=C.ARM_RAISE_DEG&&ang(rs,re)>=C.ARM_RAISE_DEG;
+}
+function checkSide(lm){
+  if(![11,12,23,24].every(i=>vis(lm,i,0.30)))return false;
+  const ls=lm[11],rs=lm[12],lh=lm[23],rh=lm[24];
+  const sMy=(ls.y+rs.y)/2,hMy=(lh.y+rh.y)/2,tH=Math.max(hMy-sMy,0.05);
+  if(Math.abs(rs.x-ls.x)/tH>0.35)return false;
+  if(Math.abs(rh.x-lh.x)/tH>0.32)return false;
+  const eI=((lm[11]&&lm[11].visibility)||0)>=((lm[12]&&lm[12].visibility)||0)?13:14;
+  if(vis(lm,eI,0.25)&&lm[eI].y<sMy-tH*0.2)return false;
+  return true;
+}
+
+/* ── UI ── */
+function activateNoPose(){
+  S.checks.body=true;S.checks.dist=true;S.checks.pose=true;S.blockMode=false;
+  g('cam-block').classList.remove('on');g('cam-warn').classList.add('on');
+  g('no-pose-bar').classList.add('on');
+  ['ch-body','ch-dist','ch-pose'].forEach(id=>{const e=g(id);if(e)e.className='chip dis';});
+}
+function allOk(){
+  return(S.mpReady?['light','steady','level','body','dist','pose']:['light','steady','level']).every(k=>S.checks[k]);
+}
+const CHIPS={light:'ch-light',steady:'ch-steady',level:'ch-level',body:'ch-body',dist:'ch-dist',pose:'ch-pose'};
+function updateUI(){
+  const keys=S.mpReady?['light','steady','level','body','dist','pose']:['light','steady','level'];
+  const ok=keys.every(k=>S.checks[k]);
+  const canShoot=S.blockMode?ok:true;
+  const sh=g('shutter');
+  if(!S.camRunning)sh.className='off';
+  else if(canShoot)sh.className=ok?'ok':'warn';
+  else sh.className='off';
+  Object.keys(CHIPS).forEach(k=>{
+    const el=g(CHIPS[k]);if(!el)return;
+    if(!S.mpReady&&['body','dist','pose'].indexOf(k)>=0){el.className='chip dis';return;}
+    el.className='chip '+(S.checks[k]?'ok':(S.blockMode?'bad':'warn'));
+  });
+  const fails=keys.filter(k=>!S.checks[k]);
+  const gt=g('guide-txt');
+  const MSGS={
+    light:S.blockMode?'Improve lighting \u2014 too dark':'Low light warning',
+    steady:S.blockMode?'Hold phone steady':'Phone is moving',
+    level:S.blockMode?'Hold phone vertically upright':'Phone is tilted',
+    body:S.blockMode?'Full body must be in frame':'Body partially out of frame',
+    dist:(function(){if(!S.lastPose)return'No person detected';const n=S.lastPose[0];return(n&&n.y>0.6)?'Step back from camera':'Move closer';})(),
+    pose:S.phase==='front'
+      ?(S.blockMode?'Raise both arms to sides (\u2265'+C.ARM_RAISE_DEG+'\u00b0)':'Arms need to be raised more')
+      :(S.blockMode?'Turn sideways for profile view':'Not quite side-on'),
+  };
+  if(!fails.length){gt.textContent=S.phase==='front'?'Arms raised \u2014 tap shutter to capture':'Side view ready \u2014 tap shutter to capture';gt.className='guide-txt ok';}
+  else{gt.textContent=MSGS[fails[0]]||fails[0];gt.className='guide-txt '+(S.blockMode?'bad':'warn');}
+}
+
+function setMode(block){
+  S.blockMode=block;
+  g('cam-block').classList.toggle('on',block);g('cam-warn').classList.toggle('on',!block);
+}
+g('cam-block').addEventListener('click',()=>setMode(true));
+g('cam-warn').addEventListener('click',()=>setMode(false));
+
+/* ── SILHOUETTES ── */
+const SIL_FRONT='<ellipse cx="30" cy="7" rx="5" ry="6" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.2"/><path d="M26 12 Q30 10 34 12 L33 30 Q30 32 27 30 Z" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.2"/><path d="M26 15 L18 24" stroke="rgba(255,255,255,.45)" stroke-width="2.5" stroke-linecap="round"/><path d="M18 24 L14 22" stroke="rgba(255,255,255,.35)" stroke-width="2" stroke-linecap="round"/><path d="M34 15 L42 24" stroke="rgba(255,255,255,.45)" stroke-width="2.5" stroke-linecap="round"/><path d="M42 24 L46 22" stroke="rgba(255,255,255,.35)" stroke-width="2" stroke-linecap="round"/><path d="M28 30 L26 52" stroke="rgba(255,255,255,.45)" stroke-width="3" stroke-linecap="round"/><path d="M26 52 L24 72" stroke="rgba(255,255,255,.38)" stroke-width="2.5" stroke-linecap="round"/><path d="M32 30 L33 52" stroke="rgba(255,255,255,.45)" stroke-width="3" stroke-linecap="round"/><path d="M33 52 L34 72" stroke="rgba(255,255,255,.38)" stroke-width="2.5" stroke-linecap="round"/>';
+const SIL_SIDE='<ellipse cx="32" cy="7" rx="5" ry="6" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.2"/><path d="M30 12 Q34 10 36 12 L35 30 Q32 32 29 30 Z" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.2"/><path d="M30 16 L28 34" stroke="rgba(255,255,255,.45)" stroke-width="2.5" stroke-linecap="round"/><path d="M28 34 L27 46" stroke="rgba(255,255,255,.35)" stroke-width="2" stroke-linecap="round"/><path d="M34 16 L34 28" stroke="rgba(255,255,255,.15)" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 3"/><path d="M30 30 L29 52" stroke="rgba(255,255,255,.45)" stroke-width="3" stroke-linecap="round"/><path d="M29 52 L28 72" stroke="rgba(255,255,255,.38)" stroke-width="2.5" stroke-linecap="round"/><path d="M33 30 L34 52" stroke="rgba(255,255,255,.15)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="5 4"/>';
+function updatePoseSil(){g('pose-sil').innerHTML=S.phase==='front'?SIL_FRONT:SIL_SIDE;}
+
+/* ── SHUTTER + CAPTURE ── */
+g('shutter').addEventListener('click',()=>{
+  const sh=g('shutter');
+  if(sh.classList.contains('off'))return;
+  sh.className='off'; // disable immediately — re-enabled via preview retake or next session
+  doCapture();
+});
+function doCapture(){
+  // Save height at moment of capture
+  if(S.phase==='front'){S.frontHeight=S._lastHcm||null;S.frontPpNorm=S._lastPpNorm||null;S.frontPcNorm=S._lastPcNorm||null;}
+  else{S.sideHeight=S._lastHcm||null;S.sidePpNorm=S._lastPpNorm||null;S.sidePcNorm=S._lastPcNorm||null;}
+
+  const fl=g('c-flash');fl.classList.add('on');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>fl.classList.remove('on')));
+
+  // Capture: 3:4 crop from whatever the video delivers
+  const W=1080,H=1440;
+  const cap=document.createElement('canvas');cap.width=W;cap.height=H;
+  const octx=cap.getContext('2d'),vw=vid.videoWidth,vh=vid.videoHeight;
+  if(!vw||!vh)return;
+  const TR=3/4,SR=vw/vh;
+  let sx,sy,sw,sh;
+  if(SR>TR){sh=vh;sw=Math.round(vh*TR);sx=Math.round((vw-sw)/2);sy=0;}
+  else{sw=vw;sh=Math.round(vw/TR);sx=0;sy=Math.round((vh-sh)/2);}
+  octx.drawImage(vid,sx,sy,sw,sh,0,0,W,H);
+
+  cap.toBlob(function(blob){
+    if(!blob)return;
+    if(S.phase==='front')S.frontBlob=blob;else S.sideBlob=blob;
+    showPreview(cap.toDataURL('image/jpeg',0.75));
+  },'image/jpeg',0.93);
+  // Note: do NOT assign cap=null (cap is const in strict mode)
+}
+
+/* ── PREVIEW ── */
+function showPreview(dataUrl){
+  g('prev-img').src=dataUrl;
+  g('prev-lbl').textContent=S.phase==='front'?'FRONT VIEW':'SIDE VIEW';
+  g('prev-status').textContent='';g('prev-status').className='prev-status';
+  const nb=g('prev-next');nb.textContent='Next \u2192';nb.disabled=false;
+  S.popupMode=S.phase==='front'?'front-normal':'side-normal';
+  g('preview').classList.add('on');
+}
+function hidePreview(){g('preview').classList.remove('on');}
+
+g('prev-retake').addEventListener('click',()=>{
+  if(S.popupMode.indexOf('front')===0){S.frontBlob=null;S.frontHeight=null;S.frontPpNorm=null;S.frontPcNorm=null;}
+  else{S.sideBlob=null;S.sideHeight=null;S.sidePpNorm=null;S.sidePcNorm=null;}
+  hidePreview();
+});
+g('prev-next').addEventListener('click',()=>{
+  const nb=g('prev-next');nb.disabled=true;
+  if(S.popupMode==='front-normal'||S.popupMode==='front-retry'){
+    S.frontDone=false;S.frontErr=null;
+    uploadBlob(S.frontBlob,S.uuid+'_front.jpg','front');
+    hidePreview();
+    S.phase='side';updatePoseSil();
+    g('cam-phase-lbl').textContent='SIDE VIEW';
+    g('hval-cur').textContent='\u2014';g('hval-cur').className='h-val dim';
+  }else{
+    S.sideDone=false;S.sideErr=null;
+    uploadBlob(S.sideBlob,S.uuid+'_side.jpg','side');
+    g('prev-status').textContent='Uploading\u2026';g('prev-status').className='prev-status uploading on';
+    pollSide();
+  }
+});
+function pollSide(){
+  if(S.sideErr)return;
+  if(S.sideDone){hidePreview();goForm();return;}
+  // timeout after 30s
+  S._pollSideCount=(S._pollSideCount||0)+1;
+  if(S._pollSideCount>150){S._pollSideCount=0;showUploadErr('side','Upload timed out — check network');return;}
+  setTimeout(pollSide,200);
+}
+
+function fetchWithTimeout(input,opts,ms){
+  const ctrl=new AbortController();
+  const id=setTimeout(()=>ctrl.abort(),ms);
+  return fetch(input,{...opts,signal:ctrl.signal}).finally(()=>clearTimeout(id));
+}
+
+function uploadBlob(blob,filename,side){
+  const fd=new FormData();fd.append('file',blob,filename);
+  if(!S.token){if(side==='front'){S.frontErr='Not authenticated';showUploadErr('front','Not authenticated');}else{S.sideErr='Not authenticated';showUploadErr('side','Not authenticated');}return;}
+  const hdrs={'Authorization':'Bearer '+S.token};
+  fetchWithTimeout(C.API+'/file',{method:'POST',headers:hdrs,body:fd},30000)
+    .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);if(side==='front'){S.frontDone=true;S.frontErr=null;S._pollSideCount=0;}else{S.sideDone=true;S.sideErr=null;}})
+    .catch(e=>{const msg=e.name==='AbortError'?'Upload timed out':e.message;if(side==='front'){S.frontErr=msg;showUploadErr('front',msg);}else{S.sideErr=msg;showUploadErr('side',msg);}});
+}
+function showUploadErr(side,msg){
+  const st=g('prev-status');
+  if(side==='front'){
+    S.phase='front';updatePoseSil();g('cam-phase-lbl').textContent='FRONT VIEW';
+    if(S.frontBlob){g('prev-img').src=URL.createObjectURL(S.frontBlob);g('prev-lbl').textContent='FRONT VIEW';st.textContent='Upload failed: '+msg;st.className='prev-status err on';const nb=g('prev-next');nb.textContent='Retry \u21bb';nb.disabled=false;S.popupMode='front-retry';showScreen('s-camera');g('preview').classList.add('on');}
+  }else{
+    if(S.sideBlob){g('prev-img').src=URL.createObjectURL(S.sideBlob);g('prev-lbl').textContent='SIDE VIEW';st.textContent='Upload failed: '+msg;st.className='prev-status err on';const nb=g('prev-next');nb.textContent='Retry \u21bb';nb.disabled=false;S.popupMode='side-retry';showScreen('s-camera');g('preview').classList.add('on');}
+  }
+}
+
+/* ── FORM ── */
+function goForm(){
+  stopCam();
+  S.consentOn=false;S.genderVal=null;S.litVal=null;
+  ['f-dob','f-weight','f-height','f-muac'].forEach(id=>g(id).value='');
+  g('f-caste').value='';
+  g('f-h-front').value=S.frontHeight?S.frontHeight.toFixed(1):'';
+  g('f-h-side').value=S.sideHeight?S.sideHeight.toFixed(1):'';
+  g('consent-box').classList.remove('on');
+  g('form-submit').disabled=true;
+  g('form-msg').textContent='';g('form-msg').className='form-msg';
+  document.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('on'));
+  showScreen('s-form');
+}
+document.querySelectorAll('#g-male,#g-female').forEach(function(b){b.addEventListener('click',function(){S.genderVal=b.dataset.v;document.querySelectorAll('#g-male,#g-female').forEach(x=>x.classList.remove('on'));b.classList.add('on');});});
+document.querySelectorAll('#lit-yes,#lit-no').forEach(function(b){b.addEventListener('click',function(){S.litVal=b.dataset.v;document.querySelectorAll('#lit-yes,#lit-no').forEach(x=>x.classList.remove('on'));b.classList.add('on');});});
+g('consent-row').addEventListener('click',function(){S.consentOn=!S.consentOn;g('consent-box').classList.toggle('on',S.consentOn);g('form-submit').disabled=!S.consentOn;});
+g('form-submit').addEventListener('click',async function(){
+  if(!S.consentOn)return;
+  const sb=g('form-submit'),msg=g('form-msg');
+  sb.disabled=true;msg.textContent='Submitting\u2026';msg.className='form-msg';
+  const dobRaw=g('f-dob').value;let dob='';
+  if(dobRaw){const p=dobRaw.split('-');dob=p[2]+'/'+p[1]+'/'+p[0];}
+  const payload={
+    uuid:S.uuid,
+    timestamp:new Date(Date.now()+330*60000).toISOString().replace('Z','+05:30'),
+    consent:true,
+    lat:S.location?S.location.lat:null,
+    lon:S.location?S.location.lon:null,
+    location_accuracy_m:S.location?S.location.acc:null,
+    date_of_birth:dob||null,
+    gender:S.genderVal||null,
+    weight_g:(v=>isNaN(v)||v<=0?null:v)(parseFloat(g('f-weight').value)),
+    height_cm_self_reported:(v=>isNaN(v)||v<=0?null:v)(parseFloat(g('f-height').value)),
+    height_cm_front_estimate:S.frontHeight?parseFloat(S.frontHeight.toFixed(1)):null,
+    height_cm_side_estimate:S.sideHeight?parseFloat(S.sideHeight.toFixed(1)):null,
+    Pp_norm_front:S.frontPpNorm?parseFloat(S.frontPpNorm.toFixed(5)):null,
+    Pc_norm_front:S.frontPcNorm?parseFloat(S.frontPcNorm.toFixed(5)):null,
+    Pp_norm_side:S.sidePpNorm?parseFloat(S.sidePpNorm.toFixed(5)):null,
+    Pc_norm_side:S.sidePcNorm?parseFloat(S.sidePcNorm.toFixed(5)):null,
+    muac_mm:(v=>isNaN(v)||v<=0?null:v)(parseFloat(g('f-muac').value)),
+    female_literacy:S.litVal||null,
+    social_group:g('f-caste').value||null,
+  };
+  try{
+    const r=await apiFetch('/data','POST',payload,false);
+    if(!r.ok){const t=await r.text();throw new Error(r.status+': '+t);}
+    msg.textContent='Submitted successfully.';msg.className='form-msg ok';
+    setTimeout(()=>goSession(),1200);
+  }catch(e){msg.textContent='Failed: '+e.message;msg.className='form-msg err';sb.disabled=false;}
+});
+g('h-reset').addEventListener('click',()=>goSession());
+
+/* ── BOOT ── */
+showScreen('s-setup');
+runSetup();
+
+})();
+</script>
+</body>
+</html>
