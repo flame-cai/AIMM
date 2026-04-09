@@ -534,6 +534,9 @@ const S={
   sideHeight:null,  sidePpNorm:null,  sidePcNorm:null,
   _lastHcm:null, _lastPpNorm:null, _lastPcNorm:null,
   _lastTopRow:null, _lastBotRow:null, _lastMH:null, // in mask-native row coords (0..mH)
+  _lastBeta:null, _lastGamma:null, // live orientation from onOrientation
+  frontBeta:null, frontGamma:null, // snapshotted at front capture
+  sideBeta:null,  sideGamma:null,  // snapshotted at side capture
   _reauthScreen:null, // screen to return to after mid-session re-auth
   _pollSideCount:0,
 };
@@ -907,8 +910,8 @@ window.skipModel=function(){};// model is mandatory
 function goSession(){
   S.uuid=genUUID();
   S.frontBlob=null;S.sideBlob=null;S.frontDone=false;S.sideDone=false;S.frontErr=null;S.sideErr=null;
-  S.frontHeight=null;S.frontPpNorm=null;S.frontPcNorm=null;
-  S.sideHeight=null;S.sidePpNorm=null;S.sidePcNorm=null;
+  S.frontHeight=null;S.frontPpNorm=null;S.frontPcNorm=null;S.frontBeta=null;S.frontGamma=null;
+  S.sideHeight=null;S.sidePpNorm=null;S.sidePcNorm=null;S.sideBeta=null;S.sideGamma=null;
   S.phase='front';
   g('sess-uuid').textContent=S.uuid;
   const dot=g('loc-dot'),val=g('loc-val');
@@ -1361,7 +1364,8 @@ function onOrientation(e){
   const beta=e.beta||0, gamma=e.gamma||0;
   const betaOk=Math.abs(beta-90)<C.TILT_BETA, gammaOk=Math.abs(gamma)<C.TILT_GAMMA;
   S.checks.level=betaOk&&gammaOk;
-  // write live to display — green when within constraint, amber when outside
+  S._lastBeta=beta; S._lastGamma=gamma;
+  // write live to display — normal colour when within constraint, dim when outside
   const bEl=g('hval-beta'), gEl=g('hval-gamma');
   if(bEl){bEl.textContent=(beta).toFixed(1)+'\u00b0';bEl.className='h-val'+(betaOk?'':' dim');}
   if(gEl){gEl.textContent=(gamma).toFixed(1)+'\u00b0';gEl.className='h-val'+(gammaOk?'':' dim');}
@@ -1481,9 +1485,14 @@ g('shutter').addEventListener('click',()=>{
   doCapture();
 });
 function doCapture(){
-  // Save height at moment of capture
-  if(S.phase==='front'){S.frontHeight=S._lastHcm||null;S.frontPpNorm=S._lastPpNorm||null;S.frontPcNorm=S._lastPcNorm||null;}
-  else{S.sideHeight=S._lastHcm||null;S.sidePpNorm=S._lastPpNorm||null;S.sidePcNorm=S._lastPcNorm||null;}
+  // Save height and orientation at moment of capture
+  if(S.phase==='front'){
+    S.frontHeight=S._lastHcm||null;S.frontPpNorm=S._lastPpNorm||null;S.frontPcNorm=S._lastPcNorm||null;
+    S.frontBeta=S._lastBeta;S.frontGamma=S._lastGamma;
+  }else{
+    S.sideHeight=S._lastHcm||null;S.sidePpNorm=S._lastPpNorm||null;S.sidePcNorm=S._lastPcNorm||null;
+    S.sideBeta=S._lastBeta;S.sideGamma=S._lastGamma;
+  }
 
   const fl=g('c-flash');fl.classList.add('on');
   requestAnimationFrame(()=>requestAnimationFrame(()=>fl.classList.remove('on')));
@@ -1610,8 +1619,12 @@ g('form-submit').addEventListener('click',async function(){
     height_cm_side_estimate:S.sideHeight?parseFloat(S.sideHeight.toFixed(1)):null,
     Pp_norm_front:S.frontPpNorm?parseFloat(S.frontPpNorm.toFixed(5)):null,
     Pc_norm_front:S.frontPcNorm?parseFloat(S.frontPcNorm.toFixed(5)):null,
+    beta_front:S.frontBeta!==null?parseFloat(S.frontBeta.toFixed(2)):null,
+    gamma_front:S.frontGamma!==null?parseFloat(S.frontGamma.toFixed(2)):null,
     Pp_norm_side:S.sidePpNorm?parseFloat(S.sidePpNorm.toFixed(5)):null,
     Pc_norm_side:S.sidePcNorm?parseFloat(S.sidePcNorm.toFixed(5)):null,
+    beta_side:S.sideBeta!==null?parseFloat(S.sideBeta.toFixed(2)):null,
+    gamma_side:S.sideGamma!==null?parseFloat(S.sideGamma.toFixed(2)):null,
     muac_mm:(v=>isNaN(v)||v<=0?null:v)(parseFloat(g('f-muac').value)),
     female_literacy:S.litVal||null,
     social_group:g('f-caste').value||null,
